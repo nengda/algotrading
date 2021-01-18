@@ -1,0 +1,33 @@
+Canvas commands
+
+How to start up?
+# sbt is an interative build tool for Scala and Java projects. To install sbt, pls refer to https://www.scala-sbt.org/1.x/docs/Setup.html
+# at the same directory as build.sbt, run the following to start up:
+sbt run
+
+# or to run all unit tests
+sbt test
+
+Assumptions
+1. Command is executed FIFO manner in a single thread. Though it can be extended based on future concurrency requirements, thread safety is not guaranteed in this implementation
+2. Problem description writes (x1, y1) and (x2, y2) must be upper left and lower right of a rectangle. I am not sure whether my understanding is correct, but ideally, as long as both points are within the canvas boundary, there should be some flexibility on how rectangle is drawn, i.e. they can be any corner of a rectangle. I might need some clarification but if it’s indeed the requirement, a checking can also be easily implemented.
+3. Problem description doesn't state clearly whether later command should override the result from previous command or should throw an error. The assumption here is it should.
+
+Why Scala?
+Scala is one of the JVM languages with extensive support for both functional and OO programming. Its syntax is similar to Kotlin but has richer offering on type safety and functions. For that reason, Scala is chosen over Java and Kotlin to implement Canvas commands.
+
+Single Responsibility Principle
+The design of Canvas commands closely follows Single Responsibility Principle. It decouples command parameter (data) from its runtime meaning (business logic), such that any refactoring or extension of first wouldn’t affect the second, or vise versa. For example, one good feature of a command framework is to persist commands into some database and replay back in the future. It can be added without touching any business logic. And when business logic evolves (e.g. a better algorithm for bucket fill), the command building remains intact.
+
+The execution behavior (i.e. how command is executed at runtime) is also decoupled from its data and business logic. As explained in the assumption section, the current implementation of execution is sequential and FIFO but when the execution characteristic of future application allows concurrency, we could then introduce another execution layer that supports multi-threading (e.g. blocking queue and thread pool executor.
+
+The Command framework is generic and can also be easily extended to other applications. For example, controlling a robot to move or rotate in different directions. The only part needed is command builder and command handler for robot. But if by any chance the robot enjoys leaving footstep on its track, the line and rectangle builder could then be reused.
+
+
+API
+By aggregating modular command builders, the Canvas commands also provide a set of human-readable, fluent-style APIs. While command is only issued from console currently, API makes it easy when it’s from different sources (a button on a web page or mobile device). Fluent-style also makes it easy when it comes to non-developer users (strategist for example) - it doesn’t require a lot of programing experience to write commands like “.line.from(Point(1,2).to(Point(4,2).draw(CharDot(‘.’))”
+
+Type Safety
+Type safety is another principal followed closely in the design of Canvas commands. In a nutshell, the goal of type safety is to eliminate as many programming bugs as possible at compile time, where the cost of mistake is lowest. For example, line command only supports drawing of character, the compiler would alert if someone mistakenly provides a Color. For another example, Canvas API supports both line and rectangle commands. It fails to compile if someone forgets to mix-in implementation of rectangle command, or mix-in the implementation but with different type of parameter.
+
+
